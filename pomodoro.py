@@ -24,218 +24,11 @@ class PomodoroApp:
         self._tag = ""
         self.tags = set()
         self.t_work = 25
-        self.t_break = self.t_work * 0.2
-        self.t_long = self.t_work * 0.6
+        self.t_break = self.t_work * 0.2    # 20%
+        self.t_long = self.t_work * 0.6     # 60%
         self.count = 0
-        self.style = "electronic"
-        self.ascii_art = {
-            "electronic": {
-                "height": 11,
-
-                "0": ["  ▄▄▄▄▄▄▄▄▄  ",
-                      " ▐░░░░░░░░░▌ ",
-                      "▐░█░█▀▀▀▀▀█░▌",
-                      "▐░▌▐░▌    ▐░▌",
-                      "▐░▌ ▐░▌   ▐░▌",
-                      "▐░▌  ▐░▌  ▐░▌",
-                      "▐░▌   ▐░▌ ▐░▌",
-                      "▐░▌    ▐░▌▐░▌",
-                      "▐░█▄▄▄▄▄█░█░▌",
-                      " ▐░░░░░░░░░▌ ",
-                      "  ▀▀▀▀▀▀▀▀▀  "],
-
-                "1": ["    ▄▄▄▄     ",
-                      "  ▄█░░░░▌    ",
-                      " ▐░░▌▐░░▌    ",
-                      "  ▀▀ ▐░░▌    ",
-                      "     ▐░░▌    ",
-                      "     ▐░░▌    ",
-                      "     ▐░░▌    ",
-                      "     ▐░░▌    ",
-                      " ▄▄▄▄█░░█▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "2": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      "          ▐░▌",
-                      " ▄▄▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀▀▀ ",
-                      "▐░█▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "3": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      " ▄▄▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      " ▄▄▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "4": [" ▄         ▄ ",
-                      "▐░▌       ▐░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░█▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      "          ▐░▌",
-                      "          ▐░▌",
-                      "           ▀ "],
-
-                "5": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀▀▀ ",
-                      "▐░█▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      "          ▐░▌",
-                      " ▄▄▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "6": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀▀▀ ",
-                      "▐░▌          ",
-                      "▐░█▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀█░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░█▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "7": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "         ▐░▌ ",
-                      "        ▐░▌  ",
-                      "       ▐░▌   ",
-                      "      ▐░▌    ",
-                      "     ▐░▌     ",
-                      "    ▐░▌      ",
-                      "   ▐░▌       ",
-                      "    ▀        "],
-
-                "8": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀█░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░█▄▄▄▄▄▄▄█░▌",
-                      " ▐░░░░░░░░░▌ ",
-                      "▐░█▀▀▀▀▀▀▀█░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░█▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-                "9": [" ▄▄▄▄▄▄▄▄▄▄▄ ",
-                      "▐░░░░░░░░░░░▌",
-                      "▐░█▀▀▀▀▀▀▀█░▌",
-                      "▐░▌       ▐░▌",
-                      "▐░█▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀█░▌",
-                      "          ▐░▌",
-                      " ▄▄▄▄▄▄▄▄▄█░▌",
-                      "▐░░░░░░░░░░░▌",
-                      " ▀▀▀▀▀▀▀▀▀▀▀ "],
-
-
-                ":": ["             ",
-                      "             ",
-                      "     ▄▄▄     ",
-                      "    ▐░░░▌    ",
-                      "     ▀▀▀     ",
-                      "             ",
-                      "     ▄▄▄     ",
-                      "    ▐░░░▌    ",
-                      "     ▀▀▀     ",
-                      "             ",
-                      "             "]
-                },
-
-            "standard": {
-                "height": 5,
-
-                "0": [" ███ ",
-                      "█   █",
-                      "█   █",
-                      "█   █",
-                      " ███ "],
-
-                "1": ["██",
-                      " █",
-                      " █",
-                      " █",
-                      " █"],
-
-                "2": [" ███ ",
-                      "█   █",
-                      "   █ ",
-                      "  █  ",
-                      " ████"],
-
-                "3": [" ███ ",
-                      "█   █",
-                      "   █ ",
-                      "█   █",
-                      " ███ "],
-
-                "4": ["   █",
-                      "  ██",
-                      " █ █",
-                      "████",
-                      "   █"],
-
-                "5": ["█████",
-                      "█    ",
-                      "█████",
-                      "    █",
-                      "█████"],
-
-                "6": [" ███ ",
-                      "█    ",
-                      "████ ",
-                      "█   █",
-                      " ███ "],
-
-                "7": ["████",
-                      "   █",
-                      "  █ ",
-                      " █  ",
-                      "█   "],
-
-                "8": [" ███ ",
-                      "█   █",
-                      " ███ ",
-                      "█   █",
-                      " ███ "],
-
-                "9": [" ███ ",
-                      "█   █",
-                      " ████",
-                      "    █",
-                      " ███ "],
-
-                ":": ["   ",
-                      " █ ",
-                      "   ",
-                      " █ ",
-                      "   "]
-                   }
-            }
+        # Styles: "Electronic", "Shadow", "Colossal"
+        self.ascii_art = AsciiArt("Electronic")
         self.loop()
 
     def loop(self):
@@ -301,16 +94,15 @@ class PomodoroApp:
         tmp = subprocess.call("setterm -cursor on", shell=True)
 
     def show(self, string):
-        height = self.ascii_art[self.style]["height"]
-        lcd = ["" for i in range(height)]
+        digits = self.ascii_art.get_digits()
+        hight = self.ascii_art.hight
+        lcd = ["" for i in range(hight)]
 
         for char in string:
-            digit = self.ascii_art[self.style][char]
-            for i in range(height):
-                line = digit[i]
-                lcd[i] += line + " "
+            for i in range(hight):
+                lcd[i] += digits[char][i] + " "
 
-        for i in range(height):
+        for i in range(hight):
             print(lcd[i])
 
     def help(self):
@@ -325,6 +117,46 @@ examples:
     pomodoro.py -h
     pomodoro.py -t develop
 """)
+
+
+class AsciiArt:
+    def __init__(self, style):
+        self.style = style
+        self.hight = 0
+        self.widths = []
+
+    def get_template(self):
+        with open("ascii.txt") as ascii_txt:
+            count = 0
+            flag = False
+            template = []
+            for line in ascii_txt:
+                if flag and count < self.hight:
+                    template.append(line.strip("\n"))
+                    count += 1
+
+                if self.style in line:
+                    settings = line.strip().split(sep=":")
+                    self.hight = int(settings[1])
+                    self.widths = [int(width) for width in settings[-11:]]
+                    flag = True
+
+        return template
+
+    def get_digits(self):
+        template = self.get_template()
+        digits = {}
+        keys = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":")
+        start = 0
+        for i in range(len(keys)):
+            key = keys[i]
+            digits[key] = []
+            end = start + self.widths[i]
+            for j in range(self.hight):
+                digits[key].append(template[j][start:end])
+            start = end
+
+        return digits
 
 
 def main(argv):
