@@ -15,6 +15,7 @@
 import sys
 import subprocess
 import getopt
+from pygame import mixer
 from os import path
 from time import time, gmtime, strftime, sleep
 
@@ -52,11 +53,8 @@ class PomodoroApp:
         chars = "/".join(sorted([key for key, value in options.items()]))
         words = ", ".join(sorted([value for key, value in options.items()]))
         message = "{} ({})? ".format(words.capitalize(), chars)
-        icon_path = path.abspath("images/tomato.xpm")
-        tmp = subprocess.call(
-            'notify-send "Pomodoro Time" "What would you like to do now?"' +
-            ' -i {}'.format(icon_path), shell=True
-        )
+        self.notify_send()
+        self.play_sound()
 
         option = input(message).lower()
         while(option not in options.keys()):
@@ -67,6 +65,20 @@ class PomodoroApp:
             sys.exit(0)
 
         return options[option]
+
+    def notify_send(self):
+        icon_path = path.abspath("images/tomato.xpm")
+        tmp = subprocess.call(
+            'notify-send "Pomodoro Time" "What would you like to do now?"' +
+            ' -i {}'.format(icon_path), shell=True
+        )
+
+    def play_sound(self):
+        mixer.init()
+        mixer.music.load("sounds/alert2.mp3")
+        mixer.music.play()
+        # while mixer.music.get_busy() == True:
+        #     continue
 
     def set_tag(self, tag):
         self._tag = tag
