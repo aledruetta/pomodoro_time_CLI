@@ -27,7 +27,42 @@ Abra el terminal y ejecute los siguientes comandos:
     $ cd path/to/pomodoro_time_CLI
     $ python3 pomodoro.py
 
+## Acceso directo en el escritorio
+
+- Cree un archivo Pomodoro.desktop en el escritorio:
+
+<!-- language: lang-bash -->
+
+    $ gedit Pomodoro.desktop
+
+- Agregue al fichero las siguientes lineas y edite los paths:
+
+<!-- language: lang-bash -->
+
+    [Desktop Entry]
+    Comment=A command line Pomodoro app
+    Terminal=true
+    Name=Pomodoro
+    Exec=python3 path/to/pomodoro.py
+    Type=Application
+    Icon=path/to/tomato.xpm
+
+- Permisos de ejecución:
+
+```bash
+    $ cd ~/Desktop
+    $ chmod +x Pomodoro.desktop
+```
+
+### Próximos pasos
+
+    - Implementar un sistema de etiquetas (tags) e informe de tiempo dedicado a cada tarea.
+
 ### Screenshots
+
+- Acceso directo:
+
+![Acceso directo en el escritorio](images/shortcut.png)
 
 - Rejoj:
 
@@ -36,8 +71,4 @@ Abra el terminal y ejecute los siguientes comandos:
 - Notificaciones:
 
 ![Notificaciones](images/notify.png)
-
-## Próximos pasos
-
-    - Implementar un sistema de etiquetas (tags) e informe de tiempo dedicado a cada tarea.
 

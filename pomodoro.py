@@ -3,7 +3,7 @@
 
 # Script Name:          pomodoro.py
 # Author:               Alejandro Druetta
-# Version:              0.2.1
+# Version:              0.2.2
 #
 # Description:          Python 3 CLI pomodoro app.
 #
@@ -22,14 +22,15 @@ from time import time, gmtime, strftime, sleep
 
 
 class PomodoroApp:
-    def __init__(self):
+    def __init__(self, abspath):
+        self.abspath = abspath
         self._tag = ""
         self.tags = set()
         self.t_work = 25
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
         self.count = 0
-        self.ascii_art = AsciiArt()
+        self.ascii_art = AsciiArt(self.abspath)
 
     def set_theme(self, theme):
         valid_themes = ("Electronic", "Colossal", "Shadow")
@@ -71,7 +72,7 @@ class PomodoroApp:
         return options[option]
 
     def notify_send(self):
-        icon_path = path.abspath("images/tomato.xpm")
+        icon_path = path.join(self.abspath, "images/tomato.xpm")
         tmp = subprocess.call(
             'notify-send "Pomodoro Time" "What would you like to do now?"' +
             ' -i {}'.format(icon_path), shell=True
@@ -79,7 +80,8 @@ class PomodoroApp:
 
     def play_sound(self):
         mixer.init()
-        mixer.music.load("sounds/alert2.mp3")
+        sound_path = path.join(self.abspath, "sounds/alert2.mp3")
+        mixer.music.load(sound_path)
         mixer.music.play()
         # while mixer.music.get_busy() == True:
         #     continue
@@ -93,9 +95,9 @@ class PomodoroApp:
         tmp = subprocess.call("setterm -cursor off", shell=True)
 
         if minutes == self.t_work:
-            message = "Working... (Ctrl+c to abot)"
+            message = "Working... (Ctrl+c to abort)"
         elif minutes == self.t_break or minutes == self.t_long:
-            message = "Coffe time... (Ctrl+c to abot)"
+            message = "Coffe time... (Ctrl+c to abort)"
 
         finish = time() + minutes * 60
         while(time() < finish):
@@ -138,13 +140,15 @@ examples:
 
 
 class AsciiArt:
-    def __init__(self, style="Electronic"):
+    def __init__(self, abspath, style="Electronic"):
+        self.abspath = abspath
         self.style = style
         self.hight = 0
         self.widths = []
 
     def _get_template(self):
-        with open("ascii.txt") as ascii_txt:
+        ascii_path = path.join(self.abspath, "ascii.txt")
+        with open(ascii_path) as ascii_txt:
             count = 0
             flag = False
             template = []
@@ -178,10 +182,13 @@ class AsciiArt:
 
 
 def main(argv):
-    pomodoro = PomodoroApp()
+    dirname = path.dirname(argv[0])
+    abspath = path.abspath(dirname)
+    pomodoro = PomodoroApp(abspath)
     try:
         # Parse terminal arguments
-        opts, args = getopt.getopt(argv, "ht:s:", ["help", "tag=", "style="])
+        opts, args = getopt.getopt(argv[1:], "ht:s:",
+                                   ["help", "tag=", "style="])
     except getopt.GetoptError:
         print("Invalid! Try `pomodoro.py --help' for more information.")
         sys.exit(2)
@@ -197,7 +204,8 @@ def main(argv):
     try:
         pomodoro.loop()
     except KeyboardInterrupt:
+        tmp = subprocess.call("setterm -cursor on", shell=True)
         sys.exit(0)
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main(sys.argv)
