@@ -3,7 +3,7 @@
 
 # Script Name:          pomodoro.py
 # Author:               Alejandro Druetta
-# Version:              0.1
+# Version:              0.2.1
 #
 # Description:          Python 3 CLI pomodoro app.
 #
@@ -11,6 +11,7 @@
 #           ./pomodoro.py -opt <arg>
 #           ./pomodoro.py -h
 #           ./pomodoro.py -t <tag>
+#           ./pomodoro.py -s <theme>
 
 import sys
 import subprocess
@@ -28,9 +29,12 @@ class PomodoroApp:
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
         self.count = 0
-        # Styles: "Electronic", "Shadow", "Colossal"
-        self.ascii_art = AsciiArt("Electronic")
-        self.loop()
+        self.ascii_art = AsciiArt()
+
+    def set_theme(self, theme):
+        valid_themes = ("Electronic", "Colossal", "Shadow")
+        if theme in valid_themes:
+            self.ascii_art = AsciiArt(theme)
 
     def loop(self):
         while(True):
@@ -89,9 +93,9 @@ class PomodoroApp:
         tmp = subprocess.call("setterm -cursor off", shell=True)
 
         if minutes == self.t_work:
-            message = "Working... "
+            message = "Working... (Ctrl+c to abot)"
         elif minutes == self.t_break or minutes == self.t_long:
-            message = "Coffe time... "
+            message = "Coffe time... (Ctrl+c to abot)"
 
         finish = time() + minutes * 60
         while(time() < finish):
@@ -120,24 +124,26 @@ class PomodoroApp:
     def help(self):
         print("""
 usage:
-    pomodoro.py -opt <arg>
+    python3 pomodoro.py -opt <arg>
 
     -h, --help      Print usage
     -t, --tag       Start with taged cicle
+    -s, --style     Select clock's theme (Electronic, Colossal, Shadow)
 
 examples:
-    pomodoro.py -h
-    pomodoro.py -t develop
+    python3 pomodoro.py -h
+    python3 pomodoro.py -t develop
+    python3 pomodoro.py -s Shadow -t lesson
 """)
 
 
 class AsciiArt:
-    def __init__(self, style):
+    def __init__(self, style="Electronic"):
         self.style = style
         self.hight = 0
         self.widths = []
 
-    def get_template(self):
+    def _get_template(self):
         with open("ascii.txt") as ascii_txt:
             count = 0
             flag = False
@@ -156,7 +162,7 @@ class AsciiArt:
         return template
 
     def get_digits(self):
-        template = self.get_template()
+        template = self._get_template()
         digits = {}
         keys = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":")
         start = 0
@@ -175,7 +181,7 @@ def main(argv):
     pomodoro = PomodoroApp()
     try:
         # Parse terminal arguments
-        opts, args = getopt.getopt(argv, "ht:", ["help", "tag="])
+        opts, args = getopt.getopt(argv, "ht:s:", ["help", "tag=", "style="])
     except getopt.GetoptError:
         print("Invalid! Try `pomodoro.py --help' for more information.")
         sys.exit(2)
@@ -185,6 +191,13 @@ def main(argv):
             sys.exit(0)
         elif opt in ("-t", "--tag"):
             pomodoro.set_tag(arg)
+        elif opt in ("-s", "--style"):
+            pomodoro.set_theme(arg)
+
+    try:
+        pomodoro.loop()
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
