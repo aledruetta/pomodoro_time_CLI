@@ -14,31 +14,30 @@ Cada ciclo será señalizado por medio de una señal sonora y una notificación 
 
 **Pomodoro Time CLI** fue escrito en **Python3** y sólo ha sido testado en **Ubuntu Linux**. La aplicación se encuentra en un estado muy temprano de desarrollo.
 
-    - python 3.x
-    - [pygame](http://pygame.org)
+    python 3.x
+    [pygame](http://pygame.org)
 
 ### Instalando y ejecutando Pomodoro Time CLI
 
 Abra el terminal y ejecute los siguientes comandos:
 
-<!-- language: lang-bash -->
-
+```bash
     $ git clone git@github.com:aledruetta/pomodoro_time_CLI.git
     $ cd path/to/pomodoro_time_CLI
     $ python3 pomodoro.py
+```
 
 ## Acceso directo en el escritorio
 
-- Cree un archivo Pomodoro.desktop en el escritorio:
+Cree un archivo Pomodoro.desktop en el escritorio:
 
-<!-- language: lang-bash -->
-
+```bash
     $ gedit Pomodoro.desktop
+```
 
-- Agregue al fichero las siguientes lineas y edite los paths:
+Agregue al fichero las siguientes lineas y edite los paths:
 
-<!-- language: lang-bash -->
-
+```bash
     [Desktop Entry]
     Comment=A command line Pomodoro app
     Terminal=true
@@ -46,8 +45,9 @@ Abra el terminal y ejecute los siguientes comandos:
     Exec=python3 path/to/pomodoro.py
     Type=Application
     Icon=path/to/tomato.xpm
+```
 
-- Permisos de ejecución:
+Permisos de ejecución:
 
 ```bash
     $ cd ~/Desktop
@@ -64,7 +64,7 @@ Abra el terminal y ejecute los siguientes comandos:
 
 ![Acceso directo en el escritorio](images/shortcut.png)
 
-- Rejoj:
+- Reloj:
 
 ![Pomodoro Time CLI working](images/pomodoro_time_CLI.png)
 
