@@ -14,49 +14,61 @@ Cada ciclo será señalizado por medio de una señal sonora y una notificación 
 
 **Pomodoro Time CLI** fue escrito en **Python3** y sólo ha sido testado en **Ubuntu Linux**. La aplicación se encuentra en un estado muy temprano de desarrollo.
 
-    python 3.x
-    [pygame](http://pygame.org)
+- python 3.x
+- [pygame](http://pygame.org)
 
 ### Instalando y ejecutando Pomodoro Time CLI
 
 Abra el terminal y ejecute los siguientes comandos:
 
 ```bash
-    $ git clone git@github.com:aledruetta/pomodoro_time_CLI.git
-    $ cd path/to/pomodoro_time_CLI
-    $ python3 pomodoro.py
+$ git clone git@github.com:aledruetta/pomodoro_time_CLI.git
+$ cd path/to/pomodoro_time_CLI
+$ python3 pomodoro.py
 ```
 
-## Acceso directo en el escritorio
+###### Opciones
+
+```bash
+-h, --help      Ayuda en línea
+-s, --style     Temas del reloj (Colossal, Electronic, Shadow)
+-t, --tag       Etiquetas (no implementado)
+
+Ejemplo:
+
+    $ ./pomodoro.py -s Electronic
+```
+
+#### Acceso directo en el escritorio
 
 Cree un archivo Pomodoro.desktop en el escritorio:
 
 ```bash
-    $ gedit Pomodoro.desktop
+$ gedit Pomodoro.desktop
 ```
 
 Agregue al fichero las siguientes lineas y edite los paths:
 
 ```bash
-    [Desktop Entry]
-    Comment=A command line Pomodoro app
-    Terminal=true
-    Name=Pomodoro
-    Exec=python3 path/to/pomodoro.py
-    Type=Application
-    Icon=path/to/tomato.xpm
+[Desktop Entry]
+Comment=A command line Pomodoro app
+Terminal=true
+Name=Pomodoro
+Exec=python3 path/to/pomodoro.py
+Type=Application
+Icon=path/to/tomato.xpm
 ```
 
 Permisos de ejecución:
 
 ```bash
-    $ cd ~/Desktop
-    $ chmod +x Pomodoro.desktop
+$ cd ~/Desktop
+$ chmod +x Pomodoro.desktop
 ```
 
 ### Próximos pasos
 
-    - Implementar un sistema de etiquetas (tags) e informe de tiempo dedicado a cada tarea.
+- Implementar un sistema de etiquetas (tags) e informe de tiempo dedicado a cada tarea.
 
 ### Screenshots
 
@@ -66,7 +78,7 @@ Permisos de ejecución:
 
 - Reloj:
 
-![Pomodoro Time CLI working](images/pomodoro_time_CLI.png)
+![Pomodoro Time CLI working](images/themes.png)
 
 - Notificaciones:
 

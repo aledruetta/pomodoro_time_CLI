@@ -3,7 +3,7 @@
 
 # Script Name:          pomodoro.py
 # Author:               Alejandro Druetta
-# Version:              0.2.2
+# Version:              0.2.3
 #
 # Description:          Python 3 CLI pomodoro app.
 #
@@ -16,6 +16,7 @@
 import sys
 import subprocess
 import getopt
+from getopt import GetoptError
 from pygame import mixer
 from os import path
 from time import time, gmtime, strftime, sleep
@@ -35,41 +36,40 @@ class PomodoroApp:
     def set_theme(self, theme):
         valid_themes = ("Electronic", "Colossal", "Shadow")
         if theme in valid_themes:
-            self.ascii_art = AsciiArt(theme)
+            self.ascii_art.style = theme
 
     def loop(self):
         while(True):
-            self.clock(self.t_work)
-            self.count += 1
+            status = self.clock(self.t_work)
+            if status == 0:
+                self.count += 1
             answer = self.ask("break", "work", "exit")
-            if answer == "break":
+            if answer == "b":
                 if self.count < 4:
-                    self.clock(self.t_break)
+                    status = self.clock(self.t_break)
                 else:
-                    self.clock(self.t_long)
+                    status = self.clock(self.t_long)
                     self.count = 0
                 answer = self.ask("work", "exit")
 
     def ask(self, *args):
-        options = {}
-        for arg in args:
-            options[arg[0]] = arg
+        options = [arg[0] for arg in args]
+        chars = "/".join(options)
+        words = ", ".join(list(args))
 
-        chars = "/".join(sorted([key for key, value in options.items()]))
-        words = ", ".join(sorted([value for key, value in options.items()]))
-        message = "{} ({})? ".format(words.capitalize(), chars)
         self.notify_send()
         self.play_sound()
 
+        message = "\n{} ({})? ".format(words.capitalize(), chars)
         option = input(message).lower()
-        while(option not in options.keys()):
+        while(option not in options):
             print("Invalid option!")
             option = input(message).lower()
 
-        if options[option] == "exit":
+        if option == "e":
             sys.exit(0)
 
-        return options[option]
+        return option
 
     def notify_send(self):
         icon_path = path.join(self.abspath, "images/tomato.xpm")
@@ -91,25 +91,30 @@ class PomodoroApp:
         self.tags.add(tag)
 
     def clock(self, minutes):
-        # Hide terminal cursor
-        tmp = subprocess.call("setterm -cursor off", shell=True)
+        try:
+            # Hide terminal cursor
+            tmp = subprocess.call("setterm -cursor off", shell=True)
 
-        if minutes == self.t_work:
-            message = "Working... (Ctrl+c to abort)"
-        elif minutes == self.t_break or minutes == self.t_long:
-            message = "Coffe time... (Ctrl+c to abort)"
+            if minutes == self.t_work:
+                message = "\nWorking... \n(Ctrl+c to abort)"
+            elif minutes == self.t_break or minutes == self.t_long:
+                message = "\nCoffe time... \n(Ctrl+c to abort)"
 
-        finish = time() + minutes * 60
-        while(time() < finish):
-            tmp = subprocess.call('clear', shell=True)
-            seconds = finish - time()
-            remaining = gmtime(seconds)
-            self.show(strftime("%M:%S", remaining))
-            print(message)
-            sleep(1)
-
-        # Cursor ON
-        tmp = subprocess.call("setterm -cursor on", shell=True)
+            finish = time() + minutes * 60
+            while(time() < finish):
+                tmp = subprocess.call('clear', shell=True)
+                seconds = finish - time()
+                remaining = gmtime(seconds)
+                self.show(strftime("%M:%S", remaining))
+                print(message)
+                sleep(1)
+        except KeyboardInterrupt:
+            return -1
+        else:
+            return 0
+        finally:
+            # Cursor ON
+            tmp = subprocess.call("setterm -cursor on", shell=True)
 
     def show(self, string):
         digits = self.ascii_art.get_digits()
@@ -140,9 +145,9 @@ examples:
 
 
 class AsciiArt:
-    def __init__(self, abspath, style="Electronic"):
+    def __init__(self, abspath):
         self.abspath = abspath
-        self.style = style
+        self.style = "Colossal"
         self.hight = 0
         self.widths = []
 
@@ -185,11 +190,12 @@ def main(argv):
     dirname = path.dirname(argv[0])
     abspath = path.abspath(dirname)
     pomodoro = PomodoroApp(abspath)
+
     try:
         # Parse terminal arguments
         opts, args = getopt.getopt(argv[1:], "ht:s:",
                                    ["help", "tag=", "style="])
-    except getopt.GetoptError:
+    except GetoptError:
         print("Invalid! Try `pomodoro.py --help' for more information.")
         sys.exit(2)
     for opt, arg in opts:
@@ -201,11 +207,7 @@ def main(argv):
         elif opt in ("-s", "--style"):
             pomodoro.set_theme(arg)
 
-    try:
-        pomodoro.loop()
-    except KeyboardInterrupt:
-        tmp = subprocess.call("setterm -cursor on", shell=True)
-        sys.exit(0)
+    pomodoro.loop()
 
 if __name__ == '__main__':
     main(sys.argv)
