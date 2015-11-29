@@ -74,6 +74,18 @@ class PomodoroApp:
             # Cursor ON
             tmp = subprocess.call("setterm -cursor on", shell=True)
 
+    def show(self, str_f_time):
+        digits = self.ascii_art.get_digits()
+        digit_height = self.ascii_art.digit_height
+        lcd = ["" for i in range(digit_height)]
+
+        for char in str_f_time:
+            for i in range(digit_height):
+                lcd[i] += digits[char][i] + " "
+
+        for i in range(digit_height):
+            print(lcd[i])
+
     def ask(self, *args):
         options = [arg[0] for arg in args]
         chars = "/".join(options)
@@ -108,18 +120,6 @@ class PomodoroApp:
         # while mixer.music.get_busy() == True:
         #     continue
 
-    def show(self, min_sec):
-        digits = self.ascii_art.get_digits()
-        height = self.ascii_art.height
-        lcd = ["" for i in range(height)]
-
-        for char in min_sec:
-            for i in range(height):
-                lcd[i] += digits[char][i] + " "
-
-        for i in range(height):
-            print(lcd[i])
-
     def set_theme(self, theme):
         valid_themes = ("Electronic", "Colossal", "Shadow")
         if theme in valid_themes:
@@ -149,7 +149,7 @@ class AsciiArt:
     def __init__(self, abspath):
         self.abspath = abspath
         self.style = "Colossal"
-        self.height = 0
+        self.digit_height = 0
         self.widths = []
 
     def _get_template(self):
@@ -159,13 +159,13 @@ class AsciiArt:
             flag = False
             template = []
             for line in ascii_txt:
-                if flag and count < self.height:
+                if flag and count < self.digit_height:
                     template.append(line.strip("\n"))
                     count += 1
 
                 if self.style in line:
                     settings = line.strip().split(sep=":")
-                    self.height = int(settings[1])
+                    self.digit_height = int(settings[1])
                     self.widths = [int(width) for width in settings[-11:]]
                     flag = True
 
@@ -180,7 +180,7 @@ class AsciiArt:
             key = keys[i]
             digits[key] = []
             end = start + self.widths[i]
-            for j in range(self.height):
+            for j in range(self.digit_height):
                 digits[key].append(template[j][start:end])
             start = end
 
