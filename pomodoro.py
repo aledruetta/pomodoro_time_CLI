@@ -9,9 +9,10 @@
 #
 # Usage:
 #           ./pomodoro.py -opt <arg>
-#           ./pomodoro.py -h
-#           ./pomodoro.py -t <tag>
-#           ./pomodoro.py -s <theme>
+#
+#           ./pomodoro.py -h            help
+#           ./pomodoro.py -t <tag>      tagging
+#           ./pomodoro.py -s <theme>    stylize
 
 import sys
 import subprocess
@@ -27,7 +28,7 @@ class PomodoroApp:
         self.abspath = abspath
         self._tag = ""
         self.tags = set()
-        self.t_work = 25
+        self.t_work = 25                    # working time
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
         self.count = 0
