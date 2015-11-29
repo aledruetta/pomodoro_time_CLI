@@ -31,7 +31,6 @@ class PomodoroApp:
         self.t_work = 25                    # working time
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
-        self.count = 0
         self.ascii_art = AsciiArt(self.abspath)
 
     def set_theme(self, theme):
@@ -40,17 +39,18 @@ class PomodoroApp:
             self.ascii_art.style = theme
 
     def loop(self):
+        count = 0
         while(True):
             status = self.clock(self.t_work)
             if status == 0:
-                self.count += 1
+                count += 1
             answer = self.ask("break", "work", "exit")
             if answer == "b":
-                if self.count < 4:
+                if count < 4:
                     status = self.clock(self.t_break)
                 else:
                     status = self.clock(self.t_long)
-                    self.count = 0
+                    count = 0
                 answer = self.ask("work", "exit")
 
     def ask(self, *args):
