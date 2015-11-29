@@ -33,12 +33,7 @@ class PomodoroApp:
         self.t_long = self.t_work * 0.6     # 60%
         self.ascii_art = AsciiArt(self.abspath)
 
-    def set_theme(self, theme):
-        valid_themes = ("Electronic", "Colossal", "Shadow")
-        if theme in valid_themes:
-            self.ascii_art.style = theme
-
-    def loop(self):
+    def main_loop(self):
         count = 0
         while(True):
             status = self.clock(self.t_work)
@@ -52,6 +47,32 @@ class PomodoroApp:
                     status = self.clock(self.t_long)
                     count = 0
                 answer = self.ask("work", "exit")
+
+    def clock(self, minutes):
+        try:
+            # Hide terminal cursor
+            tmp = subprocess.call("setterm -cursor off", shell=True)
+
+            if minutes == self.t_work:
+                message = "\nWorking... \n(Ctrl+c to abort)"
+            elif minutes == self.t_break or minutes == self.t_long:
+                message = "\nCoffe time... \n(Ctrl+c to abort)"
+
+            finish = time() + minutes * 60
+            while(time() < finish):
+                tmp = subprocess.call('clear', shell=True)
+                seconds = finish - time()
+                remaining = gmtime(seconds)     # time tuple
+                self.show(strftime("%M:%S", remaining))
+                print(message)
+                sleep(1)
+        except KeyboardInterrupt:       # Ctrl+C
+            return -1
+        else:
+            return 0
+        finally:
+            # Cursor ON
+            tmp = subprocess.call("setterm -cursor on", shell=True)
 
     def ask(self, *args):
         options = [arg[0] for arg in args]
@@ -87,47 +108,26 @@ class PomodoroApp:
         # while mixer.music.get_busy() == True:
         #     continue
 
+    def show(self, min_sec):
+        digits = self.ascii_art.get_digits()
+        height = self.ascii_art.height
+        lcd = ["" for i in range(height)]
+
+        for char in min_sec:
+            for i in range(height):
+                lcd[i] += digits[char][i] + " "
+
+        for i in range(height):
+            print(lcd[i])
+
+    def set_theme(self, theme):
+        valid_themes = ("Electronic", "Colossal", "Shadow")
+        if theme in valid_themes:
+            self.ascii_art.style = theme
+
     def set_tag(self, tag):
         self._tag = tag
         self.tags.add(tag)
-
-    def clock(self, minutes):
-        try:
-            # Hide terminal cursor
-            tmp = subprocess.call("setterm -cursor off", shell=True)
-
-            if minutes == self.t_work:
-                message = "\nWorking... \n(Ctrl+c to abort)"
-            elif minutes == self.t_break or minutes == self.t_long:
-                message = "\nCoffe time... \n(Ctrl+c to abort)"
-
-            finish = time() + minutes * 60
-            while(time() < finish):
-                tmp = subprocess.call('clear', shell=True)
-                seconds = finish - time()
-                remaining = gmtime(seconds)
-                self.show(strftime("%M:%S", remaining))
-                print(message)
-                sleep(1)
-        except KeyboardInterrupt:
-            return -1
-        else:
-            return 0
-        finally:
-            # Cursor ON
-            tmp = subprocess.call("setterm -cursor on", shell=True)
-
-    def show(self, string):
-        digits = self.ascii_art.get_digits()
-        hight = self.ascii_art.hight
-        lcd = ["" for i in range(hight)]
-
-        for char in string:
-            for i in range(hight):
-                lcd[i] += digits[char][i] + " "
-
-        for i in range(hight):
-            print(lcd[i])
 
     def help(self):
         print("""
@@ -149,7 +149,7 @@ class AsciiArt:
     def __init__(self, abspath):
         self.abspath = abspath
         self.style = "Colossal"
-        self.hight = 0
+        self.height = 0
         self.widths = []
 
     def _get_template(self):
@@ -159,13 +159,13 @@ class AsciiArt:
             flag = False
             template = []
             for line in ascii_txt:
-                if flag and count < self.hight:
+                if flag and count < self.height:
                     template.append(line.strip("\n"))
                     count += 1
 
                 if self.style in line:
                     settings = line.strip().split(sep=":")
-                    self.hight = int(settings[1])
+                    self.height = int(settings[1])
                     self.widths = [int(width) for width in settings[-11:]]
                     flag = True
 
@@ -180,7 +180,7 @@ class AsciiArt:
             key = keys[i]
             digits[key] = []
             end = start + self.widths[i]
-            for j in range(self.hight):
+            for j in range(self.height):
                 digits[key].append(template[j][start:end])
             start = end
 
@@ -208,7 +208,7 @@ def main(argv):
         elif opt in ("-s", "--style"):
             pomodoro.set_theme(arg)
 
-    pomodoro.loop()
+    pomodoro.main_loop()
 
 if __name__ == '__main__':
     main(sys.argv)
