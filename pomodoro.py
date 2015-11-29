@@ -13,40 +13,64 @@
 #           ./pomodoro.py -h            help
 #           ./pomodoro.py -t <tag>      tagging
 #           ./pomodoro.py -s <theme>    stylize
+#           ./pomodoro.py --clear       clear database
 
 import sys
 import subprocess
 import getopt
+import sqlite3 as sql
 from getopt import GetoptError
 from pygame import mixer
 from os import path
+from collections import Counter
 from time import time, gmtime, strftime, sleep
+
+DATABASE = "database.db"
 
 
 class PomodoroApp:
     def __init__(self, abspath):
         self.abspath = abspath
-        self._tag = ""
-        self.tags = set()
-        self.t_work = 25                    # working time
+        self.tag = ""
+        self.tags = self.get_tags()
+        self.t_work = 0.2                   # working time
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
         self.ascii_art = AsciiArt(self.abspath)
 
     def main_loop(self):
-        count = 0
+        break_count = 0
+
         while(True):
             status = self.clock(self.t_work)
+
             if status == 0:
-                count += 1
-            answer = self.ask("break", "work", "exit")
-            if answer == "b":
-                if count < 4:
+                break_count += 1
+                if self.tag:
+                    self.tags.update((self.tag,))      # tag +1
+                    self.update_db()
+
+            answer = self.ask_user("\nBreak, Work or Exit", "b", "w", "e")
+            if answer == "b":       # break
+                if break_count < 4:
                     status = self.clock(self.t_break)
                 else:
                     status = self.clock(self.t_long)
-                    count = 0
-                answer = self.ask("work", "exit")
+                    break_count = 0
+
+                answer = self.ask_user("\nWork or Exit", "w", "e")
+
+            if answer == "e":
+                sys.exit(0)
+
+            self.summary()
+
+            answer = self.ask_user("\nContinue {}".format(self.tag), "y", "n")
+            if answer == "n":
+                new_tag = input("Enter a new tag or press Return: ").lower()
+                new_tag = new_tag.strip()
+                if new_tag and (new_tag != self.tag):
+                    self.tag = new_tag
 
     def clock(self, minutes):
         try:
@@ -54,7 +78,8 @@ class PomodoroApp:
             tmp = subprocess.call("setterm -cursor off", shell=True)
 
             if minutes == self.t_work:
-                message = "\nWorking... \n(Ctrl+c to abort)"
+                message = "\nWorking in {}... \n(Ctrl+c to abort)".format(
+                    self.tag.upper())
             elif minutes == self.t_break or minutes == self.t_long:
                 message = "\nCoffe time... \n(Ctrl+c to abort)"
 
@@ -86,24 +111,21 @@ class PomodoroApp:
         for i in range(digit_height):
             print(lcd[i])
 
-    def ask(self, *args):
-        options = [arg[0] for arg in args]
-        chars = "/".join(options)
-        words = ", ".join(list(args))
+    def ask_user(self, message, *options):
+        opts = "/".join(options)
+        while True:
+            answer = input(message + " (" + opts + ")? ").lower().strip()
+            if answer not in opts:
+                print("Invalid option!")
+            else:
+                break
+        return answer
 
-        self.notify_send()
-        self.play_sound()
-
-        message = "\n{} ({})? ".format(words.capitalize(), chars)
-        option = input(message).lower()
-        while(option not in options):
-            print("Invalid option!")
-            option = input(message).lower()
-
-        if option == "e":
-            sys.exit(0)
-
-        return option
+    def summary(self):
+        if self.tags:
+            print()
+            for tag, count in self.tags.most_common():
+                print("{} \t {}".format(tag, count))
 
     def notify_send(self):
         icon_path = path.join(self.abspath, "images/tomato.xpm")
@@ -125,9 +147,32 @@ class PomodoroApp:
         if theme in valid_themes:
             self.ascii_art.style = theme
 
-    def set_tag(self, tag):
-        self._tag = tag
-        self.tags.add(tag)
+    def get_tags(self):
+        tags_counter = Counter()
+        conn = sql.connect(DATABASE)
+        with conn:
+            cur = conn.cursor()
+            fetch = cur.execute("SELECT * FROM tags").fetchall()
+            for tag, count in fetch:
+                tags_counter[tag] = count
+
+        return tags_counter
+
+    def update_db(self):
+        conn = sql.connect(DATABASE)
+        with conn:
+            cur = conn.cursor()
+            count = self.tags[self.tag]
+            cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
+                        (self.tag, count))
+            conn.commit()
+
+    def clear_db(self):
+        answer = self.ask_user("Are you shure", "y", "n")
+        if answer == "y":
+            subprocess.call(['rm', DATABASE])
+            subprocess.check_output("cat schema.sql | sqlite3 {}".format(
+                DATABASE), shell=True)
 
     def help(self):
         print("""
@@ -137,6 +182,7 @@ usage:
     -h, --help      Print usage
     -t, --tag       Start with taged cicle
     -s, --style     Select clock's theme (Electronic, Colossal, Shadow)
+        --clear     Clear database
 
 examples:
     python3 pomodoro.py -h
@@ -195,18 +241,22 @@ def main(argv):
     try:
         # Parse terminal arguments
         opts, args = getopt.getopt(argv[1:], "ht:s:",
-                                   ["help", "tag=", "style="])
+                                   ["help", "clear", "tag=", "style="])
     except GetoptError:
         print("Invalid! Try `pomodoro.py --help' for more information.")
         sys.exit(2)
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            pomodoro.help()
-            sys.exit(0)
-        elif opt in ("-t", "--tag"):
-            pomodoro.set_tag(arg)
-        elif opt in ("-s", "--style"):
-            pomodoro.set_theme(arg)
+    else:
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                pomodoro.help()
+                sys.exit(0)
+            elif opt in ("-t", "--tag"):
+                pomodoro.tag = arg
+            elif opt in ("-s", "--style"):
+                pomodoro.set_theme(arg)
+            elif opt in ("--clear"):
+                pomodoro.clear_db()
+                sys.exit(0)
 
     pomodoro.main_loop()
 

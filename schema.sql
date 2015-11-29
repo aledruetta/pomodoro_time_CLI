@@ -1,0 +1,5 @@
+CREATE TABLE tags
+(
+    tag_ID  TEXT PRIMARY KEY NOT NULL,
+    count   INTEGER NOT NULL DEFAULT 0
+);
