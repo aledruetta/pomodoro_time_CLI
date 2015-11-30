@@ -3,7 +3,7 @@
 
 # Script Name:          pomodoro.py
 # Author:               Alejandro Druetta
-# Version:              0.3
+# Version:              0.3.1
 #
 # Description:          Python 3 CLI pomodoro app.
 #
@@ -43,11 +43,16 @@ class PomodoroApp:
         while(True):
             status = self.clock(self.t_work)
 
+            # Notify send and Play sound
+            self.notify_send()
+            self.play_sound()
+
             if status == 0:
                 break_count += 1
                 if self.tag:
-                    self.tags.update((self.tag,))      # tag +1
-                    self.update_db()
+                    self.update_db()    # tag +1
+
+            self.summary()
 
             answer = self.ask_user("\nBreak, Work or Exit", "b", "w", "e")
             if answer == "b":       # break
@@ -62,18 +67,14 @@ class PomodoroApp:
             if answer == "e":
                 sys.exit(0)
 
-            self.summary()
-
             if self.tag:
                 answer = self.ask_user("\nContinue {}".format(
                     self.tag), "y", "n")
                 if answer == "n":
                     new_tag = input("Enter a new tag or press Return: ")
-                    new_tag = new_tag.strip().lower()
-                    if new_tag and (new_tag != self.tag):
-                        self.tag = new_tag
+                    self.tag = new_tag.strip().lower()
             else:
-                tag = input("Enter a new tag or press Return: ")
+                tag = input("Enter a tag or press Return: ")
                 self.tag = tag.lower().strip()
 
     def clock(self, minutes):
@@ -129,7 +130,9 @@ class PomodoroApp:
         if self.tags:
             print()
             for tag, count in self.tags.most_common():
-                print("{} \t {}".format(tag, count))
+                strf_tag_time = gmtime(count * 25 * 60)
+                tag_time = strftime("%H:%M", strf_tag_time)
+                print("{} {}".format(tag_time, tag))
 
     def notify_send(self):
         icon_path = path.join(self.abspath, "images/tomato.xpm")
@@ -166,6 +169,7 @@ class PomodoroApp:
         conn = sql.connect(self.database)
         with conn:
             cur = conn.cursor()
+            self.tags.update((self.tag,))      # tag +1
             count = self.tags[self.tag]
             cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
                         (self.tag, count))
