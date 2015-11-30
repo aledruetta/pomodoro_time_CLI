@@ -33,7 +33,7 @@ class PomodoroApp:
         self.abspath = abspath
         self.tag = ""
         self.tags = self.get_tags()
-        self.t_work = 0.2                   # working time
+        self.t_work = 25                    # working time
         self.t_break = self.t_work * 0.2    # 20%
         self.t_long = self.t_work * 0.6     # 60%
         self.ascii_art = AsciiArt(self.abspath)
@@ -65,12 +65,17 @@ class PomodoroApp:
 
             self.summary()
 
-            answer = self.ask_user("\nContinue {}".format(self.tag), "y", "n")
-            if answer == "n":
-                new_tag = input("Enter a new tag or press Return: ").lower()
-                new_tag = new_tag.strip()
-                if new_tag and (new_tag != self.tag):
-                    self.tag = new_tag
+            if self.tag:
+                answer = self.ask_user("\nContinue {}".format(
+                    self.tag), "y", "n")
+                if answer == "n":
+                    new_tag = input("Enter a new tag or press Return: ")
+                    new_tag = new_tag.strip().lower()
+                    if new_tag and (new_tag != self.tag):
+                        self.tag = new_tag
+            else:
+                tag = input("Enter a new tag or press Return: ")
+                self.tag = tag.lower().strip()
 
     def clock(self, minutes):
         try:
