@@ -3,7 +3,7 @@
 
 # Script Name:          pomodoro.py
 # Author:               Alejandro Druetta
-# Version:              0.2.3
+# Version:              0.3
 #
 # Description:          Python 3 CLI pomodoro app.
 #
@@ -25,12 +25,11 @@ from os import path
 from collections import Counter
 from time import time, gmtime, strftime, sleep
 
-DATABASE = "database.db"
-
 
 class PomodoroApp:
     def __init__(self, abspath):
         self.abspath = abspath
+        self.database = path.join(self.abspath, "database.db")
         self.tag = ""
         self.tags = self.get_tags()
         self.t_work = 25                    # working time
@@ -154,7 +153,7 @@ class PomodoroApp:
 
     def get_tags(self):
         tags_counter = Counter()
-        conn = sql.connect(DATABASE)
+        conn = sql.connect(self.database)
         with conn:
             cur = conn.cursor()
             fetch = cur.execute("SELECT * FROM tags").fetchall()
@@ -164,7 +163,7 @@ class PomodoroApp:
         return tags_counter
 
     def update_db(self):
-        conn = sql.connect(DATABASE)
+        conn = sql.connect(self.database)
         with conn:
             cur = conn.cursor()
             count = self.tags[self.tag]
@@ -175,9 +174,9 @@ class PomodoroApp:
     def clear_db(self):
         answer = self.ask_user("Are you shure", "y", "n")
         if answer == "y":
-            subprocess.call(['rm', DATABASE])
+            subprocess.call(['rm', self.database])
             subprocess.check_output("cat schema.sql | sqlite3 {}".format(
-                DATABASE), shell=True)
+                self.database), shell=True)
 
     def help(self):
         print("""
