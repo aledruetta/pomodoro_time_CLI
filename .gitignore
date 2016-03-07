@@ -2,6 +2,9 @@
 *.sw[pow]
 .ropeproject/
 
+# Virtualenv
+venv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
