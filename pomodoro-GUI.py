@@ -22,7 +22,7 @@ class Pomodoro(Frame):
         super().__init__(parent)
         self.top = parent
         self.abspath = abspath
-        self.t_work = 25
+        self.t_work = 1
         self.t_break = self.t_work * 0.2
         self.t_long = self.t_work * 0.6
         self.initUI()
@@ -36,27 +36,34 @@ class Pomodoro(Frame):
         self["relief"] = "solid"
         self.pack()
 
-        self.time = StringVar()
-        self.time.set("25:00")
+        self.display_time = StringVar()
+        self.display_time.set("00:00")
 
-        self.timeLabel = Label(self, textvariable=self.time)
+        self.timeLabel = Label(self, textvariable=self.display_time)
         self.timeLabel["padx"] = "10px"
         self.timeLabel["font"] = "helvetica 48 bold"
         self.timeLabel["relief"] = "raised"
+        self.timeLabel["fg"] = "gray"
         self.timeLabel.pack(expand=True, fill=tk.X)
 
         self.buttonFrame = Frame(self)
         self.buttonFrame.pack(expand=True, fill=tk.X)
+
+        self.workButton = Button(self.buttonFrame)
+        self.workButton["command"] = lambda: self.clock(self.t_work)
+        self.workButton["text"] = "Work"
+        self.workButton["font"] = "helvetica 16"
+        self.workButton.pack(expand=True, fill=tk.X)
 
         self.breakButton = Button(self.buttonFrame)
         self.breakButton["text"] = "Break"
         self.breakButton["font"] = "helvetica 16"
         self.breakButton.pack(expand=True, fill=tk.X)
 
-        self.workButton = Button(self.buttonFrame)
-        self.workButton["text"] = "Work"
-        self.workButton["font"] = "helvetica 16"
-        self.workButton.pack(expand=True, fill=tk.X)
+        self.stopButton = Button(self.buttonFrame)
+        self.stopButton["text"] = "Stop"
+        self.stopButton["font"] = "helvetica 16"
+        self.stopButton.pack(expand=True, fill=tk.X)
 
         self.tag = StringVar()
         self.tag.set("unknown")
@@ -66,10 +73,8 @@ class Pomodoro(Frame):
         self.statusLabel.pack(expand=True, anchor=tk.NW)
 
     def main_loop(self):
-        break_count = 0
-
-        while(True):
-            self.clock(self.t_work)
+        self.break_count = IntegerVar()
+        self.break_count.set(0)
 
     def clock(self, minutes):
         if minutes == self.t_work:
@@ -85,8 +90,9 @@ class Pomodoro(Frame):
         while(time() < finish):
             seconds = finish - time()
             remaining = gmtime(seconds)
-            self.time.set(strftime("%M:%S", remaining))
+            self.display_time.set(strftime("%M:%S", remaining))
             sleep(1)
+            self.timeLabel.update()
 
 
 def main():
