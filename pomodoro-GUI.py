@@ -10,7 +10,6 @@
 # Usage:
 
 import tkinter as tk
-from tkinter import simpledialog
 from tkinter import Tk, Frame, Label, Button, Entry, StringVar
 import sqlite3 as sql
 import sys
@@ -21,6 +20,7 @@ from time import time, gmtime, strftime, sleep
 T_WORK = 0.5
 T_BREAK = T_WORK * 0.2
 T_LONG = T_WORK * 0.6
+
 YELLOW = "#fcf3cf"
 BLUE = "#2874a6"
 RED = "#e74c3c"
@@ -57,7 +57,7 @@ class Pomodoro(Frame):
 
         self.entryTag = Entry(self, textvariable=self.tagVar)
         self.entryTag["font"] = "helvetica 14 bold"
-        self.entryTag.bind('<Return>', self.catchTag)
+        self.entryTag["fg"] = "gray"
         self.entryTag.pack(expand=True, fill=tk.X)
 
         self.timeLabel = Label(self, textvariable=self.displayVar)
@@ -80,6 +80,7 @@ class Pomodoro(Frame):
 
     def action(self, action):
         if action == "Work":
+            self.catchTag()
             self.work_count += 1
             self.timeLabel["fg"] = BLUE
             self.actionButton["text"] = "Pause"
@@ -101,8 +102,8 @@ class Pomodoro(Frame):
                 self.clock(T_LONG)
                 self.work_count = 0
             self.entryTag["state"] = "normal"
-            self.actionButton["text"] = "Work"
             self.actionButton["state"] = "normal"
+            self.actionButton["text"] = "Work"
 
     def clock(self, minutes):
         finish = time() + minutes * 60
