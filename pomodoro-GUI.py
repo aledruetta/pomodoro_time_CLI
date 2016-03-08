@@ -27,12 +27,19 @@ RED = "#e74c3c"
 GREEN = "#229954"
 ORANGE = "#dc7633"
 
+WORK = "Work"
+PAUSE = "Pause"
+CONTINUE = "Continue"
+BREAK = "Break"
+
+DEBUG = True
+
 
 class Pomodoro(Frame):
 
     def __init__(self, parent, abspath):
         super().__init__(parent)
-        self.master = parent
+        self.root = parent
         self.abspath = abspath
 
         self.work_count = 0
@@ -41,7 +48,7 @@ class Pomodoro(Frame):
         self.tagVar = StringVar()
         self.tagVar.set("")
         self.actionVar = StringVar()
-        self.actionVar.set("Work")
+        self.actionVar.set(WORK)
         self.displayVar = StringVar()
         self.displayVar.set("00:00")
 
@@ -49,8 +56,8 @@ class Pomodoro(Frame):
 
     def initUI(self):
         # toplevel
-        self.master.title("PomodoroPy")
-        self.master.resizable(0, 0)
+        self.root.title("PomodoroPy")
+        self.root.resizable(0, 0)
 
         # main frame
         self.pack()
@@ -68,7 +75,7 @@ class Pomodoro(Frame):
         self.timeLabel.pack(expand=True, fill=tk.X)
 
         self.actionButton = Button(self)
-        self.actionButton["text"] = "Work"
+        self.actionButton["text"] = WORK
         self.actionButton["font"] = "helvetica 16"
         self.actionButton["command"] = lambda: self.action(
             self.actionButton.cget("text"))
@@ -78,21 +85,25 @@ class Pomodoro(Frame):
         self.entryTag["state"] = "readonly"
         self.tagVar.set(self.tagVar.get().upper())
 
+        # DEBUG | Delete for release
+        if DEBUG:
+            print(self.tagVar.get())
+
     def action(self, action):
-        if action == "Work":
+        if action == WORK:
             self.catchTag()
             self.work_count += 1
             self.timeLabel["fg"] = BLUE
-            self.actionButton["text"] = "Pause"
+            self.actionButton["text"] = PAUSE
             self.clock(T_WORK)
-            self.actionButton["text"] = "Break"
-        elif action == "Pause":
+            self.actionButton["text"] = BREAK
+        elif action == PAUSE:
             self.timeLabel["fg"] = RED
-            self.actionButton["text"] = "Continue"
-        elif action == "Continue":
+            self.actionButton["text"] = CONTINUE
+        elif action == CONTINUE:
             self.timeLabel["fg"] = BLUE
-            self.actionButton["text"] = "Pause"
-        elif action == "Break":
+            self.actionButton["text"] = PAUSE
+        elif action == BREAK:
             self.actionButton["state"] = "disable"
             if self.work_count < 4:
                 self.timeLabel["fg"] = GREEN
@@ -103,13 +114,13 @@ class Pomodoro(Frame):
                 self.work_count = 0
             self.entryTag["state"] = "normal"
             self.actionButton["state"] = "normal"
-            self.actionButton["text"] = "Work"
+            self.actionButton["text"] = WORK
 
     def clock(self, minutes):
         finish = time() + minutes * 60
         while(time() < finish):
             self.actionButton.update()
-            if self.actionButton.cget("text") != "Continue":
+            if self.actionButton.cget("text") != CONTINUE:
                 seconds = finish - time()
                 remaining = gmtime(seconds)
                 self.displayVar.set(strftime("%M:%S", remaining))
@@ -122,9 +133,9 @@ class Pomodoro(Frame):
 def main():
     dirname = path.dirname(sys.argv[0])
     abspath = path.abspath(dirname)
-    master = Tk()
-    app = Pomodoro(master, abspath)
-    master.mainloop()
+    root = Tk()
+    app = Pomodoro(root, abspath)
+    root.mainloop()
 
 
 if __name__ == '__main__':
