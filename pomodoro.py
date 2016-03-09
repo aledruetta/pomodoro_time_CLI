@@ -1,272 +1,156 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Script Name:          pomodoro.py
+# Script Name:          pomodoro-GUI.py
 # Author:               Alejandro Druetta
-# Version:              0.3.1
+# Version:              0.1
 #
-# Description:          Python 3 CLI pomodoro app.
+# Description:          Python 3 GUI pomodoro app.
 #
 # Usage:
-#           ./pomodoro.py -opt <arg>
-#
-#           ./pomodoro.py -h            help
-#           ./pomodoro.py -t <tag>      tagging
-#           ./pomodoro.py -s <theme>    stylize
-#           ./pomodoro.py --clear       clear database
 
-import sys
-import subprocess
-import getopt
+import tkinter as tk
+from tkinter import Tk, Frame, Label, Button, Entry, StringVar
 import sqlite3 as sql
-from getopt import GetoptError
-from pygame import mixer
+import sys
 from os import path
-from collections import Counter
 from time import time, gmtime, strftime, sleep
 
+# Constants
+T_WORK = 25
+T_BREAK = T_WORK * 0.2
+T_LONG = T_WORK * 0.6
 
-class PomodoroApp:
-    def __init__(self, abspath):
+YELLOW = "#fcf3cf"
+BLUE = "#2874a6"
+RED = "#e74c3c"
+GREEN = "#229954"
+ORANGE = "#dc7633"
+
+WORK = "Work"
+PAUSE = "Pause"
+CONTINUE = "Continue"
+BREAK = "Break"
+
+DEBUG = True
+
+
+class Pomodoro(Frame):
+
+    def __init__(self, parent, abspath):
+        super().__init__(parent)
+        self.root = parent
         self.abspath = abspath
         self.database = path.join(self.abspath, "database.db")
-        self.tag = ""
-        self.tags = self.get_tags()
-        self.t_work = 25                    # working time
-        self.t_break = self.t_work * 0.2    # 20%
-        self.t_long = self.t_work * 0.6     # 60%
-        self.ascii_art = AsciiArt(self.abspath)
 
-    def main_loop(self):
-        break_count = 0
+        self.work_count = 0
 
-        while(True):
-            status = self.clock(self.t_work)
+        # Tk variables
+        self.tagVar = StringVar()
+        self.tagVar.set("")
+        self.actionVar = StringVar()
+        self.actionVar.set(WORK)
+        self.displayVar = StringVar()
+        self.displayVar.set("00:00")
 
-            # Notify send and Play sound
-            self.notify_send()
-            self.play_sound()
+        self.initUI()
 
-            if status == 0:
-                break_count += 1
-                if self.tag:
-                    self.update_db()    # tag +1
+    def initUI(self):
+        # toplevel
+        self.root.title("PomodoroPy")
+        self.root.resizable(0, 0)
 
-            self.summary()
+        # main frame
+        self.pack()
 
-            answer = self.ask_user("\nBreak, Work or Exit", "b", "w", "e")
-            if answer == "b":       # break
-                if break_count < 4:
-                    status = self.clock(self.t_break)
-                else:
-                    status = self.clock(self.t_long)
-                    break_count = 0
+        self.entryTag = Entry(self, textvariable=self.tagVar)
+        self.entryTag["font"] = "helvetica 14 bold"
+        self.entryTag["fg"] = "gray"
+        self.entryTag.pack(expand=True, fill=tk.X)
 
-                answer = self.ask_user("\nWork or Exit", "w", "e")
+        self.timeLabel = Label(self, textvariable=self.displayVar)
+        self.timeLabel["background"] = YELLOW
+        self.timeLabel["padx"] = "10px"
+        self.timeLabel["font"] = "helvetica 48 bold"
+        self.timeLabel["fg"] = "gray"
+        self.timeLabel.pack(expand=True, fill=tk.X)
 
-            if answer == "e":
-                sys.exit(0)
+        self.actionButton = Button(self)
+        self.actionButton["text"] = WORK
+        self.actionButton["font"] = "helvetica 16"
+        self.actionButton["command"] = lambda: self.action(
+            self.actionButton.cget("text"))
+        self.actionButton.pack(expand=True, fill=tk.X)
 
-            if self.tag:
-                answer = self.ask_user("\nContinue {}".format(
-                    self.tag), "y", "n")
-                if answer == "n":
-                    new_tag = input("Enter a new tag or press Return: ")
-                    self.tag = new_tag.strip().lower()
-            else:
-                tag = input("Enter a tag or press Return: ")
-                self.tag = tag.lower().strip()
+    def catchTag(self, event=None):
+        self.entryTag["state"] = "readonly"
+        self.tagVar.set(self.tagVar.get().strip().upper())
+        self.updateDB()
 
-    def clock(self, minutes):
-        try:
-            # Hide terminal cursor
-            tmp = subprocess.call("setterm -cursor off", shell=True)
+        # DEBUG | Delete for release
+        if DEBUG:
+            print(self.tagVar.get())
 
-            if minutes == self.t_work:
-                message = "\nWorking in {}... \n(Ctrl+c to abort)".format(
-                    self.tag.upper())
-            elif minutes == self.t_break or minutes == self.t_long:
-                message = "\nCoffe time... \n(Ctrl+c to abort)"
-
-            finish = time() + minutes * 60
-            while(time() < finish):
-                tmp = subprocess.call('clear', shell=True)
-                seconds = finish - time()
-                remaining = gmtime(seconds)     # time tuple
-                self.show(strftime("%M:%S", remaining))
-                print(message)
-                sleep(1)
-        except KeyboardInterrupt:       # Ctrl+C
-            return -1
-        else:
-            return 0
-        finally:
-            # Cursor ON
-            tmp = subprocess.call("setterm -cursor on", shell=True)
-
-    def show(self, str_f_time):
-        digits = self.ascii_art.get_digits()
-        digit_height = self.ascii_art.digit_height
-        lcd = ["" for i in range(digit_height)]
-
-        for char in str_f_time:
-            for i in range(digit_height):
-                lcd[i] += digits[char][i] + " "
-
-        for i in range(digit_height):
-            print(lcd[i])
-
-    def ask_user(self, message, *options):
-        opts = "/".join(options)
-        while True:
-            answer = input(message + " (" + opts + ")? ").lower().strip()
-            if answer not in opts:
-                print("Invalid option!")
-            else:
-                break
-        return answer
-
-    def summary(self):
-        if self.tags:
-            print()
-            for tag, count in self.tags.most_common():
-                strf_tag_time = gmtime(count * 25 * 60)
-                tag_time = strftime("%H:%M", strf_tag_time)
-                print("{} {}".format(tag_time, tag))
-
-    def notify_send(self):
-        icon_path = path.join(self.abspath, "images/tomato.xpm")
-        tmp = subprocess.call(
-            'notify-send "Pomodoro Time" "What would you like to do now?"' +
-            ' -i {}'.format(icon_path), shell=True
-        )
-
-    def play_sound(self):
-        mixer.init()
-        sound_path = path.join(self.abspath, "sounds/alert2.mp3")
-        mixer.music.load(sound_path)
-        mixer.music.play()
-        # while mixer.music.get_busy() == True:
-        #     continue
-
-    def set_theme(self, theme):
-        valid_themes = ("Electronic", "Colossal", "Shadow")
-        if theme in valid_themes:
-            self.ascii_art.style = theme
-
-    def get_tags(self):
-        tags_counter = Counter()
+    def updateDB(self):
         conn = sql.connect(self.database)
+        tag = self.tagVar.get().lower()
         with conn:
             cur = conn.cursor()
-            fetch = cur.execute("SELECT * FROM tags").fetchall()
-            for tag, count in fetch:
-                tags_counter[tag] = count
-
-        return tags_counter
-
-    def update_db(self):
-        conn = sql.connect(self.database)
-        with conn:
-            cur = conn.cursor()
-            self.tags.update((self.tag,))      # tag +1
-            count = self.tags[self.tag]
+            count = cur.execute(
+                "SELECT count FROM tags WHERE tag_ID = ?",
+                (tag)).fetch()
             cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
-                        (self.tag, count))
+                        (tag, count + 1))
             conn.commit()
 
-    def clear_db(self):
-        answer = self.ask_user("Are you shure", "y", "n")
-        if answer == "y":
-            subprocess.call(['rm', self.database])
-            subprocess.check_output("cat schema.sql | sqlite3 {}".format(
-                self.database), shell=True)
+    def action(self, action):
+        if action == WORK:
+            self.catchTag()
+            self.work_count += 1
+            self.timeLabel["fg"] = BLUE
+            self.actionButton["text"] = PAUSE
+            self.clock(T_WORK)
+            self.actionButton["text"] = BREAK
+        elif action == PAUSE:
+            self.timeLabel["fg"] = RED
+            self.actionButton["text"] = CONTINUE
+        elif action == CONTINUE:
+            self.timeLabel["fg"] = BLUE
+            self.actionButton["text"] = PAUSE
+        elif action == BREAK:
+            self.actionButton["state"] = "disable"
+            if self.work_count < 4:
+                self.timeLabel["fg"] = GREEN
+                self.clock(T_BREAK)
+            elif self.work_count >= 4:
+                self.timeLabel["fg"] = ORANGE
+                self.clock(T_LONG)
+                self.work_count = 0
+            self.entryTag["state"] = "normal"
+            self.actionButton["state"] = "normal"
+            self.actionButton["text"] = WORK
 
-    def help(self):
-        print("""
-usage:
-    python3 pomodoro.py -opt <arg>
-
-    -h, --help      Print usage
-    -t, --tag       Start with taged cicle
-    -s, --style     Select clock's theme (Electronic, Colossal, Shadow)
-        --clear     Clear database
-
-examples:
-    python3 pomodoro.py -h
-    python3 pomodoro.py -t develop
-    python3 pomodoro.py -s Shadow -t lesson
-""")
-
-
-class AsciiArt:
-    def __init__(self, abspath):
-        self.abspath = abspath
-        self.style = "Colossal"
-        self.digit_height = 0
-        self.widths = []
-
-    def _get_template(self):
-        ascii_path = path.join(self.abspath, "ascii.txt")
-        with open(ascii_path) as ascii_txt:
-            count = 0
-            flag = False
-            template = []
-            for line in ascii_txt:
-                if flag and count < self.digit_height:
-                    template.append(line.strip("\n"))
-                    count += 1
-
-                if self.style in line:
-                    settings = line.strip().split(sep=":")
-                    self.digit_height = int(settings[1])
-                    self.widths = [int(width) for width in settings[-11:]]
-                    flag = True
-
-        return template
-
-    def get_digits(self):
-        template = self._get_template()
-        digits = {}
-        keys = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":")
-        start = 0
-        for i in range(len(keys)):
-            key = keys[i]
-            digits[key] = []
-            end = start + self.widths[i]
-            for j in range(self.digit_height):
-                digits[key].append(template[j][start:end])
-            start = end
-
-        return digits
+    def clock(self, minutes):
+        finish = time() + minutes * 60
+        while(time() < finish):
+            self.actionButton.update()
+            if self.actionButton.cget("text") != CONTINUE:
+                seconds = finish - time()
+                remaining = gmtime(seconds)
+                self.displayVar.set(strftime("%M:%S", remaining))
+                self.update_idletasks()
+                sleep(1)
+            else:
+                finish = time() + seconds
 
 
-def main(argv):
-    dirname = path.dirname(argv[0])
+def main():
+    dirname = path.dirname(sys.argv[0])
     abspath = path.abspath(dirname)
-    pomodoro = PomodoroApp(abspath)
+    root = Tk()
+    app = Pomodoro(root, abspath)
+    root.mainloop()
 
-    try:
-        # Parse terminal arguments
-        opts, args = getopt.getopt(argv[1:], "ht:s:",
-                                   ["help", "clear", "tag=", "style="])
-    except GetoptError:
-        print("Invalid! Try `pomodoro.py --help' for more information.")
-        sys.exit(2)
-    else:
-        for opt, arg in opts:
-            if opt in ("-h", "--help"):
-                pomodoro.help()
-                sys.exit(0)
-            elif opt in ("-t", "--tag"):
-                pomodoro.tag = arg
-            elif opt in ("-s", "--style"):
-                pomodoro.set_theme(arg)
-            elif opt in ("--clear"):
-                pomodoro.clear_db()
-                sys.exit(0)
-
-    pomodoro.main_loop()
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
