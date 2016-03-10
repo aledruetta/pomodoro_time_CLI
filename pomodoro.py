@@ -11,13 +11,20 @@
 
 import tkinter as tk
 from tkinter import Tk, Frame, Label, Button, Entry, StringVar
+from pygame import mixer
 import sqlite3 as sql
 import sys
 from os import path
 from time import time, gmtime, strftime, sleep
 
+DEBUG = True
+
 # Constants
-T_WORK = 25
+if DEBUG:
+    T_WORK = 0.5
+else:
+    T_WORK = 25
+
 T_BREAK = T_WORK * 0.2
 T_LONG = T_WORK * 0.6
 
@@ -31,8 +38,6 @@ WORK = "Work"
 PAUSE = "Pause"
 CONTINUE = "Continue"
 BREAK = "Break"
-
-DEBUG = True
 
 
 class Pomodoro(Frame):
@@ -85,23 +90,23 @@ class Pomodoro(Frame):
     def catchTag(self, event=None):
         self.entryTag["state"] = "readonly"
         self.tagVar.set(self.tagVar.get().strip().upper())
-        self.updateDB()
+#        self.updateDB()
 
         # DEBUG | Delete for release
         if DEBUG:
             print(self.tagVar.get())
 
-    def updateDB(self):
-        conn = sql.connect(self.database)
-        tag = self.tagVar.get().lower()
-        with conn:
-            cur = conn.cursor()
-            count = cur.execute(
-                "SELECT count FROM tags WHERE tag_ID = ?",
-                (tag)).fetch()
-            cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
-                        (tag, count + 1))
-            conn.commit()
+#    def updateDB(self):
+#        conn = sql.connect(self.database)
+#        tag = self.tagVar.get().lower()
+#        with conn:
+#            cur = conn.cursor()
+#            count = cur.execute(
+#                "SELECT count FROM tags WHERE tag_ID = ?",
+#                (tag)).fetch()
+#            cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
+#                        (tag, count + 1))
+#            conn.commit()
 
     def action(self, action):
         if action == WORK:
@@ -142,6 +147,14 @@ class Pomodoro(Frame):
                 sleep(1)
             else:
                 finish = time() + seconds
+
+        self.playSound()
+
+    def playSound(self):
+        mixer.init()
+        soundPath = path.join(self.abspath, "sounds/alert2.mp3")
+        mixer.music.load(soundPath)
+        mixer.music.play()
 
 
 def main():
