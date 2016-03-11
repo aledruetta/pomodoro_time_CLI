@@ -90,23 +90,30 @@ class Pomodoro(Frame):
     def catchTag(self, event=None):
         self.entryTag["state"] = "readonly"
         self.tagVar.set(self.tagVar.get().strip().upper())
-#        self.updateDB()
+        self.updateDB()
 
         # DEBUG | Delete for release
         if DEBUG:
             print(self.tagVar.get())
 
-#    def updateDB(self):
-#        conn = sql.connect(self.database)
-#        tag = self.tagVar.get().lower()
-#        with conn:
-#            cur = conn.cursor()
-#            count = cur.execute(
-#                "SELECT count FROM tags WHERE tag_ID = ?",
-#                (tag)).fetch()
-#            cur.execute("INSERT or REPLACE INTO tags VALUES (?, ?)",
-#                        (tag, count + 1))
-#            conn.commit()
+    def updateDB(self):
+        conn = sql.connect(self.database)
+        tag = self.tagVar.get().lower()
+        with conn:
+            if tag:
+                cur = conn.cursor()
+                count = cur.execute(
+                    "SELECT count FROM tags WHERE tag_ID=?",
+                    (tag,)).fetchone()
+                print(tag, count)
+                try:
+                    cur.execute("UPDATE tags SET count=? WHERE tag_ID=?",
+                                (count[0] + 1, tag))
+                except TypeError:
+                    cur.execute("INSERT INTO tags VALUES (?, ?)",
+                                (tag, 1))
+                finally:
+                    conn.commit()
 
     def action(self, action):
         if action == WORK:
