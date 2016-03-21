@@ -10,21 +10,19 @@
 # Usage:
 
 import tkinter as tk
-from tkinter import Tk, Frame, Label, Button, Entry, StringVar
-from pygame import mixer
-import sqlite3 as sql
-import sys
+from tkinter import Tk, Frame, Label, Button, StringVar
 from os import path
+from pygame import mixer
+import sys
 from time import time, gmtime, strftime, sleep
 
-DEBUG = True
+DEBUG = False
 
 # Constants
 if DEBUG:
     T_WORK = 0.5
 else:
     T_WORK = 25
-
 T_BREAK = T_WORK * 0.2
 T_LONG = T_WORK * 0.6
 
@@ -46,7 +44,6 @@ class Pomodoro(Frame):
         super().__init__(parent)
         self.root = parent
         self.abspath = abspath
-        self.database = path.join(self.abspath, "database.db")
 
         self.work_count = 0
 
@@ -68,11 +65,6 @@ class Pomodoro(Frame):
         # main frame
         self.pack()
 
-        self.entryTag = Entry(self, textvariable=self.tagVar)
-        self.entryTag["font"] = "helvetica 14 bold"
-        self.entryTag["fg"] = "gray"
-        self.entryTag.pack(expand=True, fill=tk.X)
-
         self.timeLabel = Label(self, textvariable=self.displayVar)
         self.timeLabel["background"] = YELLOW
         self.timeLabel["padx"] = "10px"
@@ -87,37 +79,8 @@ class Pomodoro(Frame):
             self.actionButton.cget("text"))
         self.actionButton.pack(expand=True, fill=tk.X)
 
-    def catchTag(self, event=None):
-        self.entryTag["state"] = "readonly"
-        self.tagVar.set(self.tagVar.get().strip().upper())
-        self.updateDB()
-
-        # DEBUG | Delete for release
-        if DEBUG:
-            print(self.tagVar.get())
-
-    def updateDB(self):
-        conn = sql.connect(self.database)
-        tag = self.tagVar.get().lower()
-        with conn:
-            if tag:
-                cur = conn.cursor()
-                count = cur.execute(
-                    "SELECT count FROM tags WHERE tag_ID=?",
-                    (tag,)).fetchone()
-                print(tag, count)
-                try:
-                    cur.execute("UPDATE tags SET count=? WHERE tag_ID=?",
-                                (count[0] + 1, tag))
-                except TypeError:
-                    cur.execute("INSERT INTO tags VALUES (?, ?)",
-                                (tag, 1))
-                finally:
-                    conn.commit()
-
     def action(self, action):
         if action == WORK:
-            self.catchTag()
             self.work_count += 1
             self.timeLabel["fg"] = BLUE
             self.actionButton["text"] = PAUSE
@@ -138,7 +101,6 @@ class Pomodoro(Frame):
                 self.timeLabel["fg"] = ORANGE
                 self.clock(T_LONG)
                 self.work_count = 0
-            self.entryTag["state"] = "normal"
             self.actionButton["state"] = "normal"
             self.actionButton["text"] = WORK
 
